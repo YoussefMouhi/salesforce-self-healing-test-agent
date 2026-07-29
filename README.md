@@ -2,7 +2,7 @@
 
 An AI-assisted test automation pipeline for a simulated Salesforce B2B Commerce storefront, built around an LLM, an MCP Playwright server, and (in progress) a self-healing agent that detects and proposes fixes for UI selector drift.
 
-**Status:** PFA internship project, [redacted] — Month 1 of 2 complete. See [Current Status](#current-status) below for what's done vs. in progress.
+**Status:** PFA internship project, [redacted] — Month 1 complete, Month 2 (self-healing) starting. See [Current Status](#current-status) below for what's done vs. in progress.
 
 ---
 
@@ -36,7 +36,7 @@ User story (natural language)
 ┌───────────────────────────────────────────┐
 │ orchestrator.py         [automation only]  │   MCP Playwright server
 │ reads a scenario, executes it against the  │   Auth via frontdoor.jsp session handoff
-│ live org (navigate/click/fill/assert)      │   (bypasses mandatory Salesforce MFA)
+│ live org (navigate/click/fill/assert)      │   Shadow-DOM-aware assertions (see below)
 └───────────────────────────────────────────┘
         │                         │
         ▼                         ▼
@@ -45,19 +45,32 @@ User story (natural language)
         │                         ▼
         │              ┌───────────────────────────────────┐
         │              │ healer.py      [AI — NOT YET BUILT]│
-        │              │ DOM diff + failed step intent      │
+        │              │ failed selector + step intent +    │
+        │              │ visible-text snapshot (see note)   │
         │              │ → LLM-proposed fix + confidence     │
         │              │ → human validation before auto-apply│
         │              └───────────────────────────────────┘
         │                         │
         ▼                         ▼
-              SQLite (run history)
+              SQLite (run history)  ✅ implemented
                        │
                        ▼
-              Streamlit dashboard
+              Streamlit dashboard  (not yet built)
 ```
 
-**Read in order:** a user story goes into `generator.py` (the only component that currently calls an LLM), producing a validated scenario file. `orchestrator.py` — pure browser automation, no AI — executes that scenario against the live simulated storefront. On failure, `healer.py` (Week 4, not yet built) will be the actual self-healing agent: it inspects the DOM at the moment of failure, asks the LLM to propose a fix with a confidence score, and only applies it automatically after a human validates it. Every run, healed or not, is logged to SQLite and surfaced on a Streamlit dashboard.
+**Read in order:** a user story goes into `generator.py` (the only component that currently calls an LLM), producing a validated scenario file. `orchestrator.py` — pure browser automation, no AI — executes that scenario against the live simulated storefront, and now logs every run to SQLite. On failure, `healer.py` (Week 4, not yet built) will be the actual self-healing agent: it inspects the failure evidence available at that point (see the Shadow DOM note below — a literal DOM diff isn't possible here), asks the LLM to propose a fix with a confidence score, and only applies it automatically after a human validates it.
+
+---
+
+## Important technical note: LWC uses closed Shadow DOM
+
+A significant finding from Month 1: Salesforce LWC renders with **closed native Shadow DOM** by default. This has a real consequence for both `orchestrator.py` and the planned `healer.py`:
+
+- `document.querySelectorAll(...)` and Playwright's `get_visible_html` **cannot see inside any LWC component** — `element.shadowRoot` returns `null` for closed roots even though the shadow root genuinely exists and is rendering.
+- Playwright's **click/fill actions** operate at the browser-engine level (via CDP) and are unaffected — they can target elements inside closed shadow roots correctly.
+- `playwright_get_visible_text` reflects the accessibility tree, which also correctly crosses closed shadow boundaries.
+
+**Practical impact:** `orchestrator.py`'s existence/assertion checks were rewritten to poll `get_visible_text` for known literal marker text per `data-testid` (see `TESTID_MARKERS` in `orchestrator.py`), instead of relying on DOM queries, which were structurally guaranteed to fail. This also means `healer.py` cannot build a traditional DOM diff — its repair-prompt input will need to be based on before/after visible-text snapshots and the literal failed selector, not DOM serialization.
 
 ---
 
@@ -69,9 +82,9 @@ It's easy to assume a project named "AI agent" is AI throughout. As of Month 1, 
 |---|---|---|
 | `generator.py` | **Yes** | Only component using an LLM so far. Turns a user story into structured test steps, grounded in real deployed `data-testid` values to prevent hallucinated selectors. |
 | LWC / Apex storefront | No | Standard Salesforce development (catalog, cart, checkout, account-based pricing). |
-| `orchestrator.py` | No | Pure browser automation — reads JSON, calls MCP Playwright tools. No LLM involved. |
-| Auth (`frontdoor.jsp` handoff) & wait-function fixes | No | Salesforce/web engineering (MFA bypass via session-token handoff, Shadow-DOM-aware polling). |
-| `healer.py` | **Yes — not built yet** | The actual self-healing reasoning loop: detect → inspect DOM → propose fix via LLM → confidence score → human validation. This is the differentiating AI contribution of the project and is the priority for Month 2. |
+| `orchestrator.py` | No | Pure browser automation — reads JSON, calls MCP Playwright tools, logs results to SQLite. No LLM involved. |
+| Auth (`frontdoor.jsp` handoff), Shadow-DOM-aware assertions, `scope_text` selector scoping | No | Salesforce/web engineering (MFA bypass via session-token handoff, marker-text-based waiting/assertion strategy, disambiguating repeated `data-testid`s across product cards). |
+| `healer.py` | **Yes — not built yet** | The actual self-healing reasoning loop: detect → gather failure evidence (visible-text snapshot + failed selector, not a DOM diff — see note above) → propose fix via LLM → confidence score → human validation. This is the differentiating AI contribution of the project and is the priority for Month 2. |
 
 ---
 
@@ -81,7 +94,7 @@ It's easy to assume a project named "AI agent" is AI throughout. As of Month 1, 
 - **LLM:** Ollama (local, `llama3.1:8b`) — Claude API as the documented fallback path
 - **Browser automation:** MCP Playwright server (`@executeautomation/playwright-mcp-server`)
 - **Target platform:** Salesforce Developer Edition (simulated B2B Commerce via custom LWCs)
-- **Storage:** SQLite (run history — in progress)
+- **Storage:** SQLite (`test_runs.db` — runs / steps / failures tables)
 - **Reporting:** Streamlit dashboard (not yet started)
 
 ---
@@ -93,13 +106,13 @@ It's easy to assume a project named "AI agent" is AI throughout. As of Month 1, 
 | Salesforce environment & toolchain | ✅ Done |
 | Storefront simulation (catalog, cart, checkout) | ✅ Done — verified end-to-end |
 | Account-based pricing | ✅ Done — verified at Apex level |
-| Scenario generator (`generator.py`) | ✅ Done — 10/10 scenarios grounded & validated |
+| Scenario generator (`generator.py`) | ✅ Done — 10 scenarios grounded & validated |
 | MCP Playwright integration | ✅ Done |
 | Authentication (`frontdoor.jsp` session handoff, MFA bypass) | ✅ Done |
-| Execution pipeline (`orchestrator.py`) | 🟡 In progress — Shadow-DOM wait-function fix being wired in |
-| Full 10-scenario validation run | 🟡 In progress |
-| SQLite run-history logging | ⬜ Not started |
-| Self-healing module (`healer.py`) | ⬜ Not started — Month 2 priority |
+| Execution pipeline (`orchestrator.py`) | ✅ Done — Shadow-DOM-aware assertions, `scope_text` selector scoping |
+| Full scenario validation run | ✅ Done — 9/9 real scenarios pass (1 scenario correctly marked `future_` — tests a feature not yet built) |
+| SQLite run-history logging | ✅ Done — `runs` / `steps` / `failures` tables, wired into every scenario run |
+| Self-healing module (`healer.py`) | ⬜ Not started — Month 2 priority, starting now |
 | Streamlit dashboard | ⬜ Not started |
 
 ---
@@ -121,15 +134,28 @@ npm install
 npx playwright install chromium
 
 # Run a scenario
-python orchestrator.py scenarios/view_products.json
+python3 orchestrator.py scenarios/view_products.json
+
+# Run the full suite
+for f in scenarios/*.json; do python3 orchestrator.py "$f"; done
+
+# Inspect run history
+python3 -c "
+import sqlite3
+conn = sqlite3.connect('test_runs.db')
+for row in conn.execute('SELECT * FROM runs'):
+    print(row)
+"
 ```
+
+> **Note:** Python virtual environments are not relocatable — if you move this project folder, delete and recreate `venv/` rather than trying to reuse it (`rm -rf venv && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`).
 
 ---
 
-## Known issues (actively being worked on)
+## Known issues / open follow-ups
 
-- `wait_for_element()` in `orchestrator.py` currently uses a plain `document.querySelectorAll()` check, which cannot see through Shadow DOM. A shadow-piercing version has been diagnosed and is being wired into the `navigate` step path.
-- A handful of scenarios assume application state (e.g. items already in the cart) that isn't guaranteed given each script run starts from a fresh, unauthenticated browser session — these will be reviewed once the wait-function fix lands.
+- `future_search_product.json` tests a search feature that doesn't exist in the storefront yet — correctly failing/excluded, but `enforce_future_prefix()` in `generator.py` should be fixed to auto-detect this case rather than relying on a manual rename.
+- A few `TESTID_MARKERS` entries (`cart-total`, `debug-raw-cart`, `checkout-error`) have no unique literal text to key off of, since they render only dynamic numbers/JSON. These currently fall back to a generic mount-proxy marker, which confirms the storefront rendered but can't verify that specific element's exact state.
 
 ---
 
