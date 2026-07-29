@@ -10,3 +10,5 @@ run_results.log
 *.sqlite
 screenshots/
 diagnose_auth.py
+*.bak*
+scenarios.bak/
