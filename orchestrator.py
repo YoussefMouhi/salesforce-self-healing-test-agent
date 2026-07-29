@@ -1,3 +1,4 @@
+import sqlite3
 import re
 import asyncio
 import os
@@ -222,6 +223,56 @@ async def run_step(session: ClientSession, step: dict) -> dict:
     return result
 
 
+
+DB_PATH = "test_runs.db"
+
+def save_run_to_db(run_record: dict) -> None:
+    """Persist a completed scenario run into runs/steps/failures tables."""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO runs (scenario_id, started_at, finished_at, overall_status) "
+            "VALUES (?, ?, ?, ?)",
+            (
+                run_record.get("scenario_id"),
+                run_record.get("started_at"),
+                run_record.get("finished_at"),
+                run_record.get("overall_status"),
+            ),
+        )
+        run_id = cur.lastrowid
+
+        for step in run_record.get("steps", []):
+            cur.execute(
+                "INSERT INTO steps (run_id, step_index, action, target, status, detail) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    run_id,
+                    step.get("step_index"),
+                    step.get("action"),
+                    step.get("target"),
+                    step.get("status"),
+                    step.get("detail"),
+                ),
+            )
+            if step.get("status") in ("fail", "error"):
+                cur.execute(
+                    "INSERT INTO failures (run_id, step_index, error_detail, debug_screenshot_path) "
+                    "VALUES (?, ?, ?, ?)",
+                    (
+                        run_id,
+                        step.get("step_index"),
+                        step.get("detail"),
+                        step.get("debug_screenshot"),
+                    ),
+                )
+        conn.commit()
+        print(f"  [db] Saved run_id={run_id} to {DB_PATH}")
+    finally:
+        conn.close()
+
+
 async def run_scenario(scenario_path: str) -> dict:
     scenario = json.loads(Path(scenario_path).read_text())
     scenario_id = scenario.get("scenario_id", "unknown")
@@ -253,6 +304,7 @@ async def run_scenario(scenario_path: str) -> dict:
                     break
 
     run_record["finished_at"] = datetime.now().isoformat()
+    save_run_to_db(run_record)
     return run_record
 
 

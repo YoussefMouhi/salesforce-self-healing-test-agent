@@ -12,3 +12,4 @@ screenshots/
 diagnose_auth.py
 *.bak*
 scenarios.bak/
+test_runs.db
