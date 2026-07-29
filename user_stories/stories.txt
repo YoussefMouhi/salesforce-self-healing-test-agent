@@ -1,0 +1,10 @@
+As a buyer, I want to see a list of available products with their names and prices, so that I can decide what to purchase.
+As a buyer with a negotiated account, I want to see my contracted price for a product instead of the standard list price, so that I'm charged the rate my company agreed to.
+As a buyer, I want to search for a product by name, so that I can quickly find what I'm looking for without scrolling through the full catalog.
+As a buyer, I want to add a product to my cart, so that I can purchase it later at checkout.
+As a buyer, I want to set a quantity of 500 units when adding a product to my cart in a single action, so that I don't have to click add to cart 500 times.
+As a buyer, I want to change the quantity of an item already in my cart, so that I can adjust my order before checking out.
+As a buyer, I want to remove an item from my cart, so that I don't purchase something I no longer want.
+As a buyer, I want to review my cart and submit my order at checkout, so that my purchase is finalized.
+As a purchasing manager, I want any order above $10,000 to be flagged as requiring my approval before it's finalized, so that large purchases don't go through without oversight.
+As a buyer, I want to see a confirmation message after submitting my order, so that I know it was received successfully.

@@ -1,0 +1,26 @@
+{
+  "scenario_id": "cart_quantity_adjustment",
+  "steps": [
+    {
+      "action": "navigate",
+      "target": "product-catalog"
+    },
+    {
+      "action": "click",
+      "target": "add-to-cart-button"
+    },
+    {
+      "action": "click",
+      "target": "cart-item-quantity"
+    },
+    {
+      "action": "fill",
+      "target": "cart-item-quantity",
+      "value": "2"
+    },
+    {
+      "action": "click",
+      "target": "cart-item-remove"
+    }
+  ]
+}

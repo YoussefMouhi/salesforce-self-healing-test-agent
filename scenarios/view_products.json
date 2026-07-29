@@ -1,0 +1,19 @@
+{
+  "scenario_id": "view_products",
+  "steps": [
+    {
+      "action": "navigate",
+      "target": "product-catalog"
+    },
+    {
+      "action": "assert",
+      "target": "product-name",
+      "expected": "displayed on each product row"
+    },
+    {
+      "action": "assert",
+      "target": "product-price",
+      "expected": "displayed on each product row"
+    }
+  ]
+}

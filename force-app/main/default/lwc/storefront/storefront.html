@@ -1,0 +1,5 @@
+<template>
+    <c-product-catalog test-account-id={testAccountId} onaddtocart={handleAddToCart}></c-product-catalog>
+    <c-cart-summary onquantitychanged={handleCartChanged} onitemremoved={handleCartChanged}></c-cart-summary>
+    <c-checkout-form test-account-id={testAccountId} cart-items={cartItems} onordersubmitted={handleOrderSubmitted}></c-checkout-form>
+</template>

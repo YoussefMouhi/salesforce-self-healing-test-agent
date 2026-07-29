@@ -1,0 +1,13 @@
+{
+  "scenario_id": "contracted_price_visible",
+  "steps": [
+    {
+      "action": "navigate",
+      "target": "product-catalog"
+    },
+    {
+      "action": "click",
+      "target": "product-card"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "scenario_id": "submit_order_confirmation",
+  "steps": [
+    {"action": "navigate", "target": "product-catalog"},
+    {"action": "click", "target": "add-to-cart-button", "scope_text": "Test Widget A"},
+    {"action": "click", "target": "checkout-submit-button"},
+    {"action": "assert", "target": "checkout-confirmation", "expected": "Order Id"}
+  ]
+}

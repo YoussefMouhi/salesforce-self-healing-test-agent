@@ -1,0 +1,17 @@
+<template>
+    <div class="catalog" data-testid="product-catalog">
+        <template for:each={products.data} for:item="entry">
+            <div key={entry.Id} class="product-card" data-testid="product-card">
+                <span data-testid="product-name">{entry.Product2.Name}</span>
+                <span data-testid="product-price">{entry.UnitPrice}</span>
+                <button
+                    data-testid="add-to-cart-button"
+                    data-id={entry.Product2.Id}
+                    data-name={entry.Product2.Name}
+                    data-price={entry.UnitPrice}
+                    onclick={handleAddToCart}
+                >Add to Cart</button>
+            </div>
+        </template>
+    </div>
+</template>

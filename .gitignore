@@ -1,0 +1,12 @@
+venv/
+node_modules/
+__pycache__/
+*.pyc
+.env
+.sf_orchestrator_creds.json
+*.log
+run_results.log
+.DS_Store
+*.sqlite
+screenshots/
+diagnose_auth.py

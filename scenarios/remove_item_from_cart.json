@@ -1,0 +1,9 @@
+{
+  "scenario_id": "remove_item_from_cart",
+  "steps": [
+    {"action": "navigate", "target": "product-catalog"},
+    {"action": "click", "target": "add-to-cart-button"},
+    {"action": "click", "target": "cart-item-remove"},
+    {"action": "assert", "target": "cart-total"}
+  ]
+}

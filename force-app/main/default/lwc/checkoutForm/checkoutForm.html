@@ -1,0 +1,36 @@
+<template>
+    <div data-testid="checkout-form">
+        <h3>Checkout</h3>
+        <p data-testid="debug-raw-cart" style="font-size:11px;color:red;">{debugCartItemsJson}</p>
+
+        <template if:false={hasItems}>
+            <p data-testid="checkout-empty">Your cart is empty.</p>
+        </template>
+
+        <template if:true={hasItems}>
+            <p data-testid="checkout-total">Total: {total}</p>
+
+            <template if:true={willRequireApproval}>
+                <p data-testid="checkout-approval-warning">
+                    This order exceeds $10,000 and will require manager approval.
+                </p>
+            </template>
+
+            <button
+                data-testid="checkout-submit-button"
+                onclick={handleSubmit}
+                disabled={submitDisabled}
+            >
+                Submit Order
+            </button>
+        </template>
+
+        <template if:true={errorMessage}>
+            <p data-testid="checkout-error">{errorMessage}</p>
+        </template>
+
+        <template if:true={orderId}>
+            <p data-testid="checkout-confirmation">Order created: {orderId}</p>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,14 @@
+{
+  "scenario_id": "submit_order_confirmation",
+  "steps": [
+    {
+      "action": "click",
+      "target": "checkout-submit-button"
+    },
+    {
+      "action": "assert",
+      "target": "checkout-confirmation",
+      "expected": "Order Id"
+    }
+  ]
+}

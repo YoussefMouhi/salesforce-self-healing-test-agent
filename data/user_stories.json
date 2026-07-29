@@ -1,0 +1,52 @@
+[
+  {
+    "id": "US-01",
+    "journey": "catalog",
+    "story": "As a buyer, I want to see the list of available products with their prices so that I can decide what to order."
+  },
+  {
+    "id": "US-02",
+    "journey": "catalog",
+    "story": "As a buyer, I want to search for a product by name so that I can quickly find what I need without scrolling the full catalog."
+  },
+  {
+    "id": "US-03",
+    "journey": "cart",
+    "story": "As a buyer, I want to add a product to my cart so that I can purchase it later."
+  },
+  {
+    "id": "US-04",
+    "journey": "cart",
+    "story": "As a buyer, I want to change the quantity of a product already in my cart so that my order matches what I actually need."
+  },
+  {
+    "id": "US-05",
+    "journey": "cart",
+    "story": "As a buyer, I want to remove a product from my cart so that I don't get charged for something I no longer want."
+  },
+  {
+    "id": "US-06",
+    "journey": "account_pricing",
+    "story": "As a buyer belonging to Account A, I want to see the negotiated price for a product so that it differs from the price shown to a buyer in Account B."
+  },
+  {
+    "id": "US-07",
+    "journey": "checkout",
+    "story": "As a buyer, I want to submit an order below the approval threshold so that it is confirmed immediately without needing manager sign-off."
+  },
+  {
+    "id": "US-08",
+    "journey": "approval_workflow",
+    "story": "As a buyer, I want an order above the approval threshold to be routed to my manager so that it cannot be finalized without their sign-off."
+  },
+  {
+    "id": "US-09",
+    "journey": "cart",
+    "story": "As a buyer, I want to add a bulk quantity of a single product (e.g. 500 units) so that I can place a large order in one line item."
+  },
+  {
+    "id": "US-10",
+    "journey": "checkout",
+    "story": "As a buyer, I want to see an order confirmation with the correct total after checkout so that I know my order was placed successfully."
+  }
+]

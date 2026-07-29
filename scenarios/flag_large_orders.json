@@ -1,0 +1,8 @@
+{
+  "scenario_id": "flag_large_orders",
+  "steps": [
+    {"action": "navigate", "target": "product-catalog"},
+    {"action": "click", "target": "add-to-cart-button"},
+    {"action": "assert", "target": "checkout-approval-warning", "expected": "$10,000 order amount is flagged for approval"}
+  ]
+}

@@ -1,0 +1,22 @@
+<template>
+    <div class="cart" data-testid="cart-summary">
+        <template for:each={cartItems} for:item="item">
+            <div key={item.productId} class="cart-item" data-testid="cart-item">
+                <span data-testid="cart-item-name">{item.productName}</span>
+                <input
+                    type="number"
+                    data-testid="cart-item-quantity"
+                    data-id={item.productId}
+                    value={item.quantity}
+                    onchange={handleQuantityChange}
+                />
+                <button
+                    data-testid="cart-item-remove"
+                    data-id={item.productId}
+                    onclick={handleRemove}
+                >Remove</button>
+            </div>
+        </template>
+        <div data-testid="cart-total">{total}</div>
+    </div>
+</template>
