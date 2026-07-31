@@ -1,4 +1,5 @@
 import sqlite3
+from healer import classify_failure
 import re
 import asyncio
 import os
@@ -296,16 +297,23 @@ def save_run_to_db(run_record: dict) -> None:
                 ),
             )
             if step.get("status") in ("fail", "error"):
+                classification = classify_failure(step)
                 cur.execute(
-                    "INSERT INTO failures (run_id, step_index, error_detail, debug_screenshot_path) "
-                    "VALUES (?, ?, ?, ?)",
+                    "INSERT INTO failures (run_id, step_index, error_detail, debug_screenshot_path, "
+                    "category, confidence, reasoning) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (
                         run_id,
                         step.get("step_index"),
                         step.get("detail"),
                         step.get("debug_screenshot"),
+                        classification["category"],
+                        classification["confidence"],
+                        classification["reasoning"],
                     ),
                 )
+                print(f"  [healer] Classified as {classification['category']} "
+                      f"(confidence={classification['confidence']})")
         conn.commit()
         print(f"  [db] Saved run_id={run_id} to {DB_PATH}")
     finally:
