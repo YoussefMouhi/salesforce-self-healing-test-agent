@@ -80,6 +80,33 @@ def _extract_testid(selector: str) -> str:
     m = re.search(r'data-testid=\"([^\"]+)\"', selector)
     return m.group(1) if m else ""
 
+def _tool_indicates_failure(res, tool_output: str) -> bool:
+    """isError from this MCP server has been observed to return False even
+    when the underlying Playwright action genuinely failed (e.g. a click
+    that timed out waiting for a locator). Treat known failure phrases in
+    the tool's own text output as authoritative, in addition to isError."""
+    if getattr(res, "isError", False):
+        return True
+    lowered = tool_output.lower()
+    return any(phrase in lowered for phrase in (
+        "operation failed",
+        "timeout",
+        "exceeded",
+        "no node found",
+        "not visible",
+        "not attached",
+    ))
+
+
+def _tool_text(res) -> str:
+    """Flatten any MCP tool result's text content -- used to capture the
+    real error message on a failed click/fill, instead of a static
+    success-looking string regardless of outcome."""
+    if not getattr(res, "content", None):
+        return ""
+    return "".join(b.text for b in res.content if getattr(b, "type", None) == "text")
+
+
 async def _visible_text(session) -> str:
     res = await session.call_tool("playwright_get_visible_text", {})
     return "".join(b.text for b in res.content if getattr(b, "type", None) == "text")
@@ -155,14 +182,26 @@ async def run_step(session: ClientSession, step: dict) -> dict:
         elif action == "click":
             selector = selector_for(target, step.get("scope_text"))
             res = await session.call_tool("playwright_click", {"selector": selector})
-            result["status"] = "fail" if getattr(res, "isError", False) else "pass"
-            result["detail"] = f"Clicked {selector}"
+            tool_output = _tool_text(res)
+            is_error = _tool_indicates_failure(res, tool_output)
+            result["status"] = "fail" if is_error else "pass"
+            result["detail"] = (
+                f"Clicked {selector}" if not is_error
+                else f"FAILED to click {selector}: {tool_output}"
+            )
+            result["raw_tool_output"] = tool_output
 
         elif action == "fill":
             selector = selector_for(target)
             res = await session.call_tool("playwright_fill", {"selector": selector, "value": str(value)})
-            result["status"] = "fail" if getattr(res, "isError", False) else "pass"
-            result["detail"] = f"Filled {selector} with '{value}'"
+            tool_output = _tool_text(res)
+            is_error = _tool_indicates_failure(res, tool_output)
+            result["status"] = "fail" if is_error else "pass"
+            result["detail"] = (
+                f"Filled {selector} with '{value}'" if not is_error
+                else f"FAILED to fill {selector} with '{value}': {tool_output}"
+            )
+            result["raw_tool_output"] = tool_output
 
         elif action == "assert":
             if target == "NOT_IMPLEMENTED":
