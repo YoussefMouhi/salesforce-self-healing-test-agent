@@ -191,6 +191,9 @@ async def run_step(session: ClientSession, step: dict) -> dict:
                 else f"FAILED to click {selector}: {tool_output}"
             )
             result["raw_tool_output"] = tool_output
+            if is_error:
+                snap = await session.call_tool("playwright_get_visible_text", {})
+                result["visible_text_at_failure"] = _tool_text(snap)
 
         elif action == "fill":
             selector = selector_for(target)
@@ -203,6 +206,9 @@ async def run_step(session: ClientSession, step: dict) -> dict:
                 else f"FAILED to fill {selector} with '{value}': {tool_output}"
             )
             result["raw_tool_output"] = tool_output
+            if is_error:
+                snap = await session.call_tool("playwright_get_visible_text", {})
+                result["visible_text_at_failure"] = _tool_text(snap)
 
         elif action == "assert":
             if target == "NOT_IMPLEMENTED":
