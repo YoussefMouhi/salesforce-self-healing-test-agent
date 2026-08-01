@@ -1,5 +1,5 @@
 import sqlite3
-from healer import classify_failure
+from healer import classify_failure, build_repair_evidence, build_repair_prompt, call_ollama_repair, validate_repair_proposal
 import re
 import asyncio
 import os
@@ -318,8 +318,44 @@ def save_run_to_db(run_record: dict) -> None:
                         classification["reasoning"],
                     ),
                 )
+                failure_id = cur.lastrowid
                 print(f"  [healer] Classified as {classification['category']} "
                       f"(confidence={classification['confidence']})")
+
+                # Only SELECTOR_NOT_FOUND is a real candidate for an
+                # auto-generated repair proposal -- other categories (e.g.
+                # NOT_INTERACTABLE, low-confidence ASSERTION_MISMATCH) have
+                # been shown this session to need human judgment, not a
+                # guessed selector fix.
+                if classification["category"] == "SELECTOR_NOT_FOUND":
+                    visible_text = step.get("visible_text_at_failure", "")
+                    evidence = build_repair_evidence(step, visible_text)
+                    prompt = build_repair_prompt(evidence)
+                    llm_result = call_ollama_repair(prompt)
+                    validated = validate_repair_proposal(evidence, llm_result)
+
+                    cur.execute(
+                        "INSERT INTO proposed_fixes (failure_id, run_id, step_index, original_target, "
+                        "proposed_testid_guess, llm_has_confident_match, llm_reasoning, "
+                        "classifier_category, classifier_confidence, status, created_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            failure_id,
+                            run_id,
+                            step.get("step_index"),
+                            step.get("target"),
+                            validated.get("proposed_testid_guess"),
+                            1 if validated.get("has_confident_match") else 0,
+                            validated.get("reasoning"),
+                            classification["category"],
+                            classification["confidence"],
+                            "pending",
+                            datetime.now().isoformat(),
+                        ),
+                    )
+                    print(f"  [healer] Proposal recorded (pending review): "
+                          f"has_confident_match={validated.get('has_confident_match')}, "
+                          f"proposed_testid_guess={validated.get('proposed_testid_guess')!r}")
         conn.commit()
         print(f"  [db] Saved run_id={run_id} to {DB_PATH}")
     finally:
