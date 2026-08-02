@@ -1,19 +1,11 @@
 {
-  "scenario_id": "search_product",
+  "scenario_id": "future_search_product",
   "steps": [
     {
       "action": "fill",
-      "target": "search-input",
-      "value": "product name"
-    },
-    {
-      "action": "click",
-      "target": "search-button"
-    },
-    {
-      "action": "assert",
-      "target": "product-catalog",
-      "expected": "product rows are visible"
+      "target": "NOT_IMPLEMENTED",
+      "value": "product name",
+      "expected": "search feature is not yet implemented"
     }
   ]
 }

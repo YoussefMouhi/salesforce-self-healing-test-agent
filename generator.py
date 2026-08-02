@@ -41,6 +41,23 @@ IMPLEMENTED elements (use these data-testid values, they are real and exist toda
 - "checkout-total" (total shown at checkout)
 - "checkout-approval-warning" (shown when order total exceeds $10,000)
 - "checkout-submit-button" (submits the order)
+
+CRITICAL RULE -- features NOT in the list above (e.g. search, filtering, sorting,
+wishlists, product reviews, discount codes, or ANY other feature not explicitly
+named above) DO NOT EXIST in this app. If a user story requires interacting with
+something not on the implemented-elements list, you MUST NOT invent a plausible-
+sounding data-testid for it (e.g. do not guess "search-input" for a search
+feature just because the name sounds reasonable). Instead, that step's "target"
+MUST be the literal string "NOT_IMPLEMENTED", and the scenario_id MUST start
+with "future_".
+
+CALIBRATION EXAMPLE (follow this pattern exactly):
+User story: "As a buyer, I want to search for products by name so I can find
+what I need quickly."
+Correct output:
+{{"scenario_id": "future_search_product", "steps": [{{"action": "fill", "target": "NOT_IMPLEMENTED", "value": "product name", "expected": "search feature is not yet implemented"}}]}}
+Note: even though "search-input" or "search-field" might sound like plausible
+testid names, they do not exist in the app and must never be guessed.
 - "checkout-confirmation" (shown after a successful order, contains the created Order Id)
 - "checkout-error" (shown if checkout fails)
 - Account-based pricing IS implemented: different accounts (e.g. via testAccountId) see different prices for the same product from the resolved price book.
