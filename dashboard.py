@@ -55,7 +55,7 @@ if runs_df.empty:
     st.info("No runs recorded yet. Run a scenario with orchestrator.py first.")
 else:
     display_runs = runs_df[["run_id", "scenario_id", "overall_status", "started_at", "finished_at"]].copy()
-    st.dataframe(display_runs, use_container_width=True, hide_index=True)
+    st.dataframe(display_runs, width="stretch", hide_index=True)
 
     st.subheader("Pass/fail by scenario")
     if not runs_df.empty:
@@ -77,7 +77,7 @@ else:
     col_a, col_b = st.columns([1, 2])
     with col_a:
         st.write("**By category**")
-        st.dataframe(category_counts.rename("count"), use_container_width=True)
+        st.dataframe(category_counts.rename("count"), width="stretch")
     with col_b:
         st.bar_chart(category_counts)
 
@@ -85,7 +85,7 @@ else:
     display_failures = failures_df[
         ["failure_id", "run_id", "step_index", "category", "confidence", "reasoning"]
     ].sort_values("failure_id", ascending=False)
-    st.dataframe(display_failures, use_container_width=True, hide_index=True)
+    st.dataframe(display_failures, width="stretch", hide_index=True)
 
 st.divider()
 
@@ -112,7 +112,7 @@ else:
             "classifier_confidence", "created_at", "reviewed_at", "reviewer_note",
         ]
     ]
-    st.dataframe(display_fixes, use_container_width=True, hide_index=True)
+    st.dataframe(display_fixes, width="stretch", hide_index=True)
 
     pending_count = (fixes_df["status"] == "pending").sum()
     if pending_count:
