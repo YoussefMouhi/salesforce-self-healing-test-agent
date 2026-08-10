@@ -1,0 +1,78 @@
+.catalog {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #f3f3f3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.product-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background-color: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .product-card {
+        transition: none;
+    }
+}
+
+.product-card:hover {
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.product-card [data-testid="product-name"] {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #181818;
+    line-height: 1.3;
+}
+
+.product-card [data-testid="product-description"] {
+    font-size: 0.8125rem;
+    color: #706e6b;
+    line-height: 1.4;
+}
+
+.product-card [data-testid="product-price"] {
+    display: inline-block;
+    align-self: flex-start;
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #056764;
+    background-color: #e8f4f3;
+    border-radius: 999px;
+    padding: 0.125rem 0.625rem;
+}
+
+.product-card button[data-testid="add-to-cart-button"] {
+    margin-top: auto;
+    align-self: flex-start;
+    background-color: #0176d3;
+    color: #ffffff;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.product-card button[data-testid="add-to-cart-button"]:hover {
+    background-color: #014486;
+}
+
+.product-card button[data-testid="add-to-cart-button"]:focus-visible {
+    outline: 2px solid #0176d3;
+    outline-offset: 2px;
+}
