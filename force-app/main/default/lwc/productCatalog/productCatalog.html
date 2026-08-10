@@ -2,6 +2,7 @@
     <div class="catalog" data-testid="product-catalog">
         <template for:each={products.data} for:item="entry">
             <div key={entry.Id} class="product-card" data-testid="product-card">
+                <span data-testid="product-category">{entry.Product2.Category__c}</span>
                 <span data-testid="product-name">{entry.Product2.Name}</span>
                 <span data-testid="product-price">{entry.UnitPrice}</span>
                 <button

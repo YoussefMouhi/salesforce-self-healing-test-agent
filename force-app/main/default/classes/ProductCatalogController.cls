@@ -5,13 +5,13 @@ public with sharing class ProductCatalogController {
         String assignedPriceBook = resolveAssignedPriceBook(testAccountId);
 
         return [
-            SELECT Id, Product2.Name, Product2.Description,
+            SELECT Id, Product2.Name, Product2.Description, Product2.Category__c,
                    UnitPrice, Pricebook2.Name
             FROM PricebookEntry
             WHERE IsActive = true
             AND Pricebook2.Name = :assignedPriceBook
-            ORDER BY Product2.Name
-            LIMIT 50
+            ORDER BY Product2.Category__c, Product2.Name
+            LIMIT 200
         ];
     }
 
