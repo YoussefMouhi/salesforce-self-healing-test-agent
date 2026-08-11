@@ -23,7 +23,7 @@ from jsonschema import validate, ValidationError
 
 ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_PATH = ROOT / "schemas" / "scenario_schema.json"
-MODEL = "claude-sonnet-4-5"  # swap for the pinned model your [redacted] env uses
+MODEL = "claude-sonnet-4-5"  # swap for the pinned model your environment uses
 
 SYSTEM_PROMPT = """You are a test scenario generator for a Salesforce B2B Commerce
 simulation built with custom Lightning Web Components.

@@ -2,7 +2,7 @@
 
 An AI-assisted test automation pipeline for a simulated Salesforce B2B Commerce storefront, built around an LLM, an MCP Playwright server, and a self-healing agent that detects and proposes fixes for UI selector drift — with every proposal gated behind human review before it can ever be applied.
 
-**Status:** PFA internship project, [redacted] — complete. See [Current Status](#current-status) below.
+**Status:** PFA internship project — complete. See [Current Status](#current-status) below.
 
 ---
 
@@ -182,5 +182,5 @@ streamlit run dashboard.py
 
 ## Author
 
-**Youssef Mouhi** — Application Developer Intern (PFA), [redacted]
+**Youssef Mouhi** — Application Developer Intern (PFA)
 Supervisor: Seddik Bourma
