@@ -2,7 +2,7 @@
 
 An AI-assisted test automation pipeline for a simulated Salesforce B2B Commerce storefront, built around an LLM, an MCP Playwright server, and a self-healing agent that detects and proposes fixes for UI selector drift — with every proposal gated behind human review before it can ever be applied.
 
-**Status:** PFA internship project — complete. See [Current Status](#current-status) below.
+**Status:** PFA internship project — core pipeline complete, active enhancements in progress. See [Current Status](#current-status) below.
 
 ---
 
@@ -113,6 +113,24 @@ This pattern showed up **independently in two different parts of the pipeline**,
 
 ---
 
+## Recent additions
+
+Beyond the initial pipeline, the following were added in a later work session on this project:
+
+**Composite-action generator fix.** Compound/colloquial buyer stories (e.g. "buy X, 3 times at once") were originally either incorrectly flagged as `future_`/`NOT_IMPLEMENTED`, or correctly avoided hallucinating a testid but then silently dropped part of the story (a stated quantity, or the checkout step), or got step ordering wrong (setting quantity before the item was actually added to the cart). Fixed by adding an explicit `COMPOSITE ACTIONS` rule and a worked calibration example to `generator.py`'s `SYSTEM_PROMPT`, teaching it to decompose a compound story into every real implemented step, in the correct order. Covered by `test_composite_actions.py` and verified end-to-end against the live org across multiple phrasings ("buy"/"order"/"purchase").
+
+**Catalog redesign and product categorization.** The storefront originally had no visual design (bare unstyled HTML) and a flat product list. Added a full CSS design pass across the catalog, cart, and checkout components, consistent with Salesforce's own Lightning Design System tokens. Added a `Product2.Category__c` custom field and grew the catalog from ~19 to 54 products across 7 categories. The catalog UI was then reworked into a two-level, category-drill-down experience: the top-level view shows category tiles only; clicking one filters to that category's products, with a "back to categories" control to return. This required corresponding updates to `generator.py`'s implemented-elements list and composite-action flow (a `category-tile` click is now a mandatory step before any `product-card` click) and to `orchestrator.py`'s `TESTID_MARKERS` (the initial catalog view's marker text changed, since "Add to Cart" no longer appears until a category is selected).
+
+**Live Demo page.** Added `pages/1_Live_Demo.py`, a Streamlit multipage view that lets a user type a user story, generate a scenario, and run it against the live org entirely through the browser — no terminal needed. On failure, it shows the same failure classification and self-healing proposal the CLI/dashboard show, resolved from the same SQLite tables. Includes an option to load an existing scenario file directly (useful for demoing a known selector-drift failure on demand).
+
+**Environment/configuration hardening.** The live org URL was previously hardcoded in `orchestrator.py` and `scripts/login_test.py`; both now read it from an `SF_CATALOG_TEST_URL` environment variable instead, with no default pointing at a real org baked into the source.
+
+**In progress:**
+- An automated email to a manager for order-level approval, using Salesforce's native Approval Process (triggered when the existing `Approval_Required__c` flag is set).
+- An automated alert email sent when a test fails and a self-healing proposal is generated, so it doesn't require actively checking the dashboard.
+
+---
+
 ## Current Status
 
 | Area | Status |
@@ -129,6 +147,11 @@ This pattern showed up **independently in two different parts of the pipeline**,
 | Self-healing module (`healer.py`) | ✅ Done — classify → evidence → LLM proposal → deterministic validation → human review, all tested against real (not just synthetic) failures |
 | Human review tool (`review_fixes.py`) | ✅ Done |
 | Streamlit dashboard (`dashboard.py`) | ✅ Done |
+| Composite-action generator fix | ✅ Done — regression-tested, verified against the live org |
+| Product categorization + category drill-down catalog UX | ✅ Done — verified against the live org |
+| Live Demo page (`pages/1_Live_Demo.py`) | ✅ Done — generate/run/self-heal entirely from the browser |
+| Order approval email (Salesforce Approval Process) | 🔄 In progress |
+| Test-failure alert email | 🔄 In progress |
 
 ---
 
@@ -168,6 +191,14 @@ python3 review_fixes.py
 streamlit run dashboard.py
 ```
 
+**Required environment variables** (set these before running `orchestrator.py`, or scenarios and alert emails will fail):
+```bash
+export SF_CATALOG_TEST_URL="https://YOUR-ORG-DOMAIN.develop.lightning.force.com/lightning/n/Catalog_Test"
+export SMTP_SENDER_EMAIL="your-sender@gmail.com"
+export SMTP_SENDER_PASSWORD="your-app-password"
+export FAILURE_ALERT_RECIPIENT="recipient@example.com"
+```
+
 > **Note:** Python virtual environments are not relocatable — if you move this project folder, delete and recreate `venv/` rather than trying to reuse it (`rm -rf venv && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`).
 
 ---
@@ -177,6 +208,7 @@ streamlit run dashboard.py
 - A few `TESTID_MARKERS` entries in `orchestrator.py` (`cart-total`, `debug-raw-cart`, `checkout-error`) have no unique literal text to key off of, since they render only dynamic numbers/JSON. These fall back to a generic mount-proxy marker, which confirms the storefront rendered but can't verify that specific element's exact state.
 - One early `failures` row (`failure_id=1`) predates `classify_failure()` being wired into the pipeline and has a null category — a historical artifact, not a bug in the current pipeline.
 - The heuristic used to extract `candidate_labels` from a visible-text snapshot in `healer.py` is a plain-text scan, not a real accessibility-tree walk; it works well in practice but is not guaranteed to find every relevant label on a more complex page than this project's catalog.
+- Scenario files generated before the category drill-down catalog UX shipped click `product-card` directly without a preceding `category-tile` click, and will fail against the current catalog. These should be regenerated rather than assumed still valid.
 
 ---
 
