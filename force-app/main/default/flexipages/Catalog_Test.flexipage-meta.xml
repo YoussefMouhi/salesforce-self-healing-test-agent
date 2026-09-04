@@ -5,6 +5,10 @@
             <componentInstance>
                 <componentName>storefront</componentName>
                 <identifier>c_storefront</identifier>
+                <componentInstanceProperties>
+                    <name>testAccountId</name>
+                    <value>001g700000jY1NxAAK</value>
+                </componentInstanceProperties>
             </componentInstance>
         </itemInstances>
         <name>main</name>
