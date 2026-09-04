@@ -102,4 +102,129 @@ public with sharing class CheckoutController {
         }
         return books[0].Id;
     }
+
+    public class ApprovalEmailResult {
+        @AuraEnabled public Boolean success;
+        @AuraEnabled public String message;
+    }
+
+    @AuraEnabled
+    public static ApprovalEmailResult sendApprovalEmail(Id orderId) {
+        ApprovalEmailResult result = new ApprovalEmailResult();
+        try {
+            Order ord = [
+                SELECT Id, TotalAmount, Account.Name, Account.Owner.Email
+                FROM Order
+                WHERE Id = :orderId
+                LIMIT 1
+            ];
+
+            String toAddress = ord.Account.Owner.Email;
+            if (String.isBlank(toAddress)) {
+                throw new AuraHandledException('No approver email found for this account owner.');
+            }
+
+            String amountStr = ord.TotalAmount == null ? '0.00' : ord.TotalAmount.setScale(2).format();
+
+            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+            mail.setToAddresses(new String[] { toAddress });
+            mail.setSubject('Approval needed -- Order ' + ord.Id);
+            mail.setPlainTextBody(
+                'An order totaling $' + amountStr + ' has been submitted and requires your approval.\n\n' +
+                'Account: ' + ord.Account.Name + '\n' +
+                'Order ID: ' + ord.Id + '\n' +
+                'Total: $' + amountStr + '\n\n' +
+                'Please review and approve or reject this order.'
+            );
+            Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+
+            ord.Approval_Status__c = 'Pending';
+            update ord;
+
+            result.success = true;
+            result.message = 'Approval email sent to ' + toAddress;
+        } catch (Exception e) {
+            result.success = false;
+            result.message = e.getMessage();
+        }
+        return result;
+    }
+
+    public class PendingApprovalInfo {
+        @AuraEnabled public Id orderId;
+        @AuraEnabled public String accountName;
+        @AuraEnabled public Decimal totalAmount;
+        @AuraEnabled public Datetime createdDate;
+    }
+
+    @AuraEnabled
+    public static List<PendingApprovalInfo> getPendingApprovals() {
+        List<PendingApprovalInfo> results = new List<PendingApprovalInfo>();
+
+        for (Order ord : [
+            SELECT Id, TotalAmount, CreatedDate, Account.Name
+            FROM Order
+            WHERE Approval_Status__c = 'Pending'
+            ORDER BY CreatedDate DESC
+        ]) {
+            PendingApprovalInfo info = new PendingApprovalInfo();
+            info.orderId = ord.Id;
+            info.accountName = ord.Account.Name;
+            info.totalAmount = ord.TotalAmount;
+            info.createdDate = ord.CreatedDate;
+            results.add(info);
+        }
+
+        return results;
+    }
+
+    public class ApprovalHistoryInfo {
+        @AuraEnabled public Id orderId;
+        @AuraEnabled public String accountName;
+        @AuraEnabled public Decimal totalAmount;
+        @AuraEnabled public Datetime createdDate;
+        @AuraEnabled public String approvalStatus;
+    }
+
+    @AuraEnabled
+    public static List<ApprovalHistoryInfo> getApprovalHistory() {
+        List<ApprovalHistoryInfo> results = new List<ApprovalHistoryInfo>();
+
+        for (Order ord : [
+            SELECT Id, TotalAmount, CreatedDate, Account.Name, Approval_Status__c
+            FROM Order
+            WHERE Approval_Status__c IN ('Approved', 'Rejected')
+            ORDER BY CreatedDate DESC
+            LIMIT 50
+        ]) {
+            ApprovalHistoryInfo info = new ApprovalHistoryInfo();
+            info.orderId = ord.Id;
+            info.accountName = ord.Account.Name;
+            info.totalAmount = ord.TotalAmount;
+            info.createdDate = ord.CreatedDate;
+            info.approvalStatus = ord.Approval_Status__c;
+            results.add(info);
+        }
+
+        return results;
+    }
+
+    @AuraEnabled
+    public static ApprovalEmailResult resolveApproval(Id orderId, Boolean approved) {
+        ApprovalEmailResult result = new ApprovalEmailResult();
+        try {
+            Order ord = new Order(
+                Id = orderId,
+                Approval_Status__c = approved ? 'Approved' : 'Rejected'
+            );
+            update ord;
+
+            result.success = true;
+            result.message = approved ? 'Order approved.' : 'Order rejected.';
+        } catch (Exception e) {
+            result.success = false;
+            result.message = e.getMessage();
+        }
+        return result;
+    }
 }

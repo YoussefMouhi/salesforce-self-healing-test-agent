@@ -1,0 +1,104 @@
+<template>
+    <div data-testid="manager-approval-page">
+        <h2>Manager Approvals</h2>
+
+        <template if:true={isLoading}>
+            <p data-testid="manager-approval-loading">Loading pending approvals...</p>
+        </template>
+
+        <template if:true={errorMessage}>
+            <p data-testid="manager-approval-error">{errorMessage}</p>
+        </template>
+
+        <template if:true={actionMessage}>
+            <p data-testid="manager-approval-action-message">{actionMessage}</p>
+        </template>
+
+        <template if:false={hasPendingOrders}>
+            <template if:false={isLoading}>
+                <p data-testid="manager-approval-empty">No orders are currently pending approval.</p>
+            </template>
+        </template>
+
+        <template if:true={hasPendingOrders}>
+            <table data-testid="manager-approval-table" style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Order</th>
+                        <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Account</th>
+                        <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Total</th>
+                        <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={pendingOrders} for:item="order">
+                        <tr key={order.orderId} data-testid="manager-approval-row">
+                            <td style="padding:0.5rem;">{order.orderId}</td>
+                            <td style="padding:0.5rem;">{order.accountName}</td>
+                            <td style="padding:0.5rem;">${order.formattedTotal}</td>
+                            <td style="padding:0.5rem;">
+                                <button
+                                    data-testid="manager-approve-button"
+                                    data-order-id={order.orderId}
+                                    onclick={handleApprove}
+                                >
+                                    Approve
+                                </button>
+                                <button
+                                    data-testid="manager-reject-button"
+                                    data-order-id={order.orderId}
+                                    onclick={handleReject}
+                                >
+                                    Reject
+                                </button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </template>
+
+        <div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #ddd;">
+            <h3>Decision History</h3>
+
+            <template if:true={isLoadingHistory}>
+                <p data-testid="manager-history-loading">Loading history...</p>
+            </template>
+
+            <template if:true={historyErrorMessage}>
+                <p data-testid="manager-history-error">{historyErrorMessage}</p>
+            </template>
+
+            <template if:false={hasHistory}>
+                <template if:false={isLoadingHistory}>
+                    <p data-testid="manager-history-empty">No approval decisions yet.</p>
+                </template>
+            </template>
+
+            <template if:true={hasHistory}>
+                <table data-testid="manager-history-table" style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Order</th>
+                            <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Account</th>
+                            <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Total</th>
+                            <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Status</th>
+                            <th style="text-align:left;border-bottom:1px solid #ddd;padding:0.5rem;">Order Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={historyOrders} for:item="order">
+                            <tr key={order.orderId} data-testid="manager-history-row">
+                                <td style="padding:0.5rem;">{order.orderId}</td>
+                                <td style="padding:0.5rem;">{order.accountName}</td>
+                                <td style="padding:0.5rem;">${order.formattedTotal}</td>
+                                <td style="padding:0.5rem;">{order.approvalStatus}</td>
+                                <td style="padding:0.5rem;">{order.createdDate}</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+        </div>
+    </div>
+</template>

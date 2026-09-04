@@ -1,7 +1,6 @@
 <template>
     <div data-testid="checkout-form">
         <h3>Checkout</h3>
-        <p data-testid="debug-raw-cart" style="font-size:11px;color:red;">{debugCartItemsJson}</p>
 
         <template if:false={hasItems}>
             <p data-testid="checkout-empty">Your cart is empty.</p>
@@ -31,6 +30,39 @@
 
         <template if:true={orderId}>
             <p data-testid="checkout-confirmation">Order created: {orderId}</p>
+        </template>
+
+        <template if:true={showApprovalSection}>
+            <div data-testid="order-approval-section" style="margin-top:1rem;padding-top:1rem;border-top:1px solid #ddd;">
+                <h4>Order Approval Required</h4>
+
+                <template if:true={isDraftStatus}>
+                    <p data-testid="approval-warning-detail">
+                        This order exceeds the $10,000 threshold and requires manager approval.
+                    </p>
+                    <textarea
+                        data-testid="approval-email-draft"
+                        readonly
+                        rows="6"
+                        style="width:100%;"
+                    >{approvalEmailPreview}</textarea>
+                    <button
+                        data-testid="send-approval-button"
+                        onclick={handleSendApproval}
+                        disabled={isSendingApproval}
+                    >
+                        Send Approval Request
+                    </button>
+                </template>
+
+                <template if:true={isPendingStatus}>
+                    <p data-testid="approval-pending-message">{approvalMessage}</p>
+                    <p data-testid="approval-awaiting-decision">
+                        Awaiting manager decision. The order will not be finalized until it is
+                        reviewed on the Manager Approvals page.
+                    </p>
+                </template>
+            </div>
         </template>
     </div>
 </template>

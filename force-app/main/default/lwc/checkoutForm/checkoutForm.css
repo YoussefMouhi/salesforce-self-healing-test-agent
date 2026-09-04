@@ -1,0 +1,95 @@
+[data-testid="checkout-form"] {
+    max-width: 28rem;
+    margin: 1rem;
+    padding: 1.25rem;
+    background-color: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+[data-testid="checkout-form"] h3 {
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f3f2f2;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #181818;
+}
+
+[data-testid="checkout-empty"] {
+    margin: 0;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #706e6b;
+    font-size: 0.875rem;
+    background-color: #fafaf9;
+    border: 1px dashed #dddbda;
+    border-radius: 0.25rem;
+}
+
+[data-testid="checkout-total"] {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #056764;
+}
+
+[data-testid="checkout-approval-warning"] {
+    margin: 0 0 1rem 0;
+    padding: 0.75rem 1rem;
+    background-color: #fef4e4;
+    border-left: 3px solid #fe9339;
+    border-radius: 0.125rem;
+    font-size: 0.8125rem;
+    color: #6b3d0a;
+}
+
+button[data-testid="checkout-submit-button"] {
+    width: 100%;
+    background-color: #0176d3;
+    color: #ffffff;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+button[data-testid="checkout-submit-button"]:hover:not(:disabled) {
+    background-color: #014486;
+}
+
+button[data-testid="checkout-submit-button"]:focus-visible {
+    outline: 2px solid #0176d3;
+    outline-offset: 2px;
+}
+
+button[data-testid="checkout-submit-button"]:disabled {
+    background-color: #c9c7c5;
+    cursor: not-allowed;
+}
+
+[data-testid="checkout-error"] {
+    margin: 0.75rem 0 0 0;
+    padding: 0.75rem 1rem;
+    background-color: #fdebea;
+    border-left: 3px solid #c23934;
+    border-radius: 0.125rem;
+    font-size: 0.8125rem;
+    color: #7a1f1a;
+}
+
+[data-testid="checkout-confirmation"] {
+    margin: 0.75rem 0 0 0;
+    padding: 0.75rem 1rem;
+    background-color: #e4f5ec;
+    border-left: 3px solid #04844b;
+    border-radius: 0.125rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #04512e;
+}
