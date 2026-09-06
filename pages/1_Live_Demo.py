@@ -7,6 +7,8 @@ the sidebar automatically (Streamlit's multipage convention).
 """
 
 import asyncio
+import json
+import subprocess
 import sqlite3
 
 import streamlit as st
@@ -58,6 +60,7 @@ if st.button("Generate Scenario"):
                 st.session_state["live_demo_scenario"] = scenario
                 st.session_state["live_demo_scenario_path"] = scenario_path
                 st.session_state.pop("live_demo_result", None)
+                st.session_state.pop("order_approval_status", None)
             except Exception as e:
                 st.error(f"Generation failed: {e}")
 
@@ -142,3 +145,54 @@ if "live_demo_result" in st.session_state:
                 st.info("No self-healing proposal was generated for this failure category.")
         else:
             st.info("No self-healing proposal was generated for this failure category.")
+
+    submitted_checkout = any(
+        s.get("target") == "checkout-submit-button" and s.get("status") == "pass"
+        for s in result.get("steps", [])
+    )
+
+    if status == "pass" and submitted_checkout:
+        try:
+            proc = subprocess.run(
+                [
+                    "sf", "data", "query", "--json", "--query",
+                    "SELECT Id, TotalAmount, Approval_Required__c FROM Order "
+                    "ORDER BY CreatedDate DESC LIMIT 1",
+                ],
+                capture_output=True, text=True, timeout=30,
+            )
+            records = json.loads(proc.stdout).get("result", {}).get("records", [])
+            latest_order = records[0] if records else None
+        except Exception as e:
+            latest_order = None
+            st.warning(f"Could not check order approval status: {e}")
+
+        if latest_order and latest_order.get("Approval_Required__c"):
+            st.header("4. Order approval required")
+            order_id = latest_order.get("Id")
+            total = latest_order.get("TotalAmount")
+
+            if "order_approval_status" not in st.session_state:
+                st.session_state["order_approval_status"] = "draft"
+
+            if st.session_state["order_approval_status"] == "draft":
+                st.warning(
+                    f"This order (**{order_id}**, total **${total:,.2f}**) exceeds "
+                    f"the $10,000 threshold and requires manager approval before "
+                    f"it can be finalized."
+                )
+                email_body = (
+                    f"Subject: Approval needed -- Order {order_id}\n\n"
+                    f"An order totaling ${total:,.2f} has been submitted and "
+                    f"requires your approval.\n\n"
+                    f"Order ID: {order_id}\n"
+                    f"Total: ${total:,.2f}\n\n"
+                    f"Please review and approve or reject this order."
+                )
+                st.text_area("Generated approval email", email_body, height=180, disabled=True)
+                if st.button("Send Approval Request"):
+                    st.session_state["order_approval_status"] = "sent"
+                    st.rerun()
+
+            elif st.session_state["order_approval_status"] == "sent":
+                st.info(f"Approval email sent. Waiting for manager decision on order **{order_id}**...")
