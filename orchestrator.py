@@ -1,5 +1,5 @@
 import sqlite3
-from healer import classify_failure, build_repair_evidence, build_repair_prompt, call_ollama_repair, validate_repair_proposal
+from healer import classify_failure, build_repair_evidence, build_repair_prompt, call_ollama_repair, validate_repair_proposal, send_failure_alert
 import re
 import asyncio
 import os
@@ -55,11 +55,15 @@ async def ensure_logged_in(session):
 # "Checkout" mount-proxy, which confirms the storefront rendered but cannot
 # distinguish that exact element's state.
 TESTID_MARKERS = {
-    "product-catalog": "Add to Cart",
+    "product-catalog": "Select a Category",
+    "category-grid": "Select a Category",
+    "category-tile": "Select a Category",
+    "category-name": "Select a Category",
     "product-card": "Add to Cart",
     "product-name": "Add to Cart",
     "product-price": "Add to Cart",
     "add-to-cart-button": "Add to Cart",
+    "back-to-categories": "Add to Cart",
     "cart-summary": "Checkout",
     "cart-item": "Remove",
     "cart-item-name": "Remove",
@@ -138,7 +142,7 @@ async def wait_for_element(session, selector: str, timeout_seconds: int = 25, po
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-CATALOG_TEST_URL = "https://orgfarm-6e1a6e3ea8-dev-ed.develop.lightning.force.com/lightning/n/Catalog_Test"
+CATALOG_TEST_URL = os.environ.get("SF_CATALOG_TEST_URL", "https://YOUR-ORG-DOMAIN.develop.lightning.force.com/lightning/n/Catalog_Test")
 
 SERVER_PARAMS = StdioServerParameters(
     command="npx",
@@ -158,6 +162,8 @@ def selector_for(target: str, scope_text: str = None) -> str:
     correctly reaches into closed native Shadow DOM LWC content.
     """
     if scope_text:
+        if target in ("product-card", "category-tile"):
+            return f'[data-testid="{target}"]:has-text("{scope_text}")'
         return f'[data-testid="product-card"]:has-text("{scope_text}") [data-testid="{target}"]'
     return f'[data-testid="{target}"]'
 
@@ -181,7 +187,7 @@ async def run_step(session: ClientSession, step: dict) -> dict:
             result["detail"] = f"Navigated to Catalog Test (step target label: {target}), catalog_rendered={found}"
 
         elif action == "click":
-            selector = selector_for(target, step.get("scope_text"))
+            selector = selector_for(target, step.get("value"))
             res = await session.call_tool("playwright_click", {"selector": selector})
             tool_output = _tool_text(res)
             is_error = _tool_indicates_failure(res, tool_output)
@@ -356,6 +362,17 @@ def save_run_to_db(run_record: dict) -> None:
                     print(f"  [healer] Proposal recorded (pending review): "
                           f"has_confident_match={validated.get('has_confident_match')}, "
                           f"proposed_testid_guess={validated.get('proposed_testid_guess')!r}")
+                    send_failure_alert(
+                        scenario_id=run_record.get("scenario_id", "unknown"),
+                        step_index=step.get("step_index"),
+                        classification=classification,
+                        proposal={
+                            "original_target": step.get("target"),
+                            "proposed_testid_guess": validated.get("proposed_testid_guess"),
+                            "llm_has_confident_match": validated.get("has_confident_match"),
+                            "llm_reasoning": validated.get("reasoning"),
+                        },
+                    )
         conn.commit()
         print(f"  [db] Saved run_id={run_id} to {DB_PATH}")
     finally:

@@ -28,6 +28,9 @@ Rules:
 - Every assertion step's "expected" field must directly reflect the core need in the user story. If the story is about price, the final assertion MUST target price, not name or something else.
 
 IMPLEMENTED elements (use these data-testid values, they are real and exist today):
+- "category-tile" (clickable tile shown on the initial catalog view; use the "value" field to specify which category, e.g. "Fuel & Consumables")
+- "category-name" (text label inside a category tile, not clickable itself)
+- "back-to-categories" (button that returns from a filtered product view back to the category grid)
 - "product-catalog" (container for the full product list)
 - "product-card" (one row per product)
 - "product-name" (product name text)
@@ -56,9 +59,17 @@ it can be satisfied by CHAINING two or more IMPLEMENTED elements together, even
 if the story uses a single colloquial verb (e.g. "buy", "order", "purchase",
 "get") that has no single matching testid of its own. These verbs almost always
 map to the real multi-step flow, IN THIS EXACT ORDER: navigate to
-product-catalog -> click the product-card -> click add-to-cart-button -> (if a
-quantity or repeat count is mentioned) fill cart-item-quantity -> click
-checkout-submit-button. Quantity can only be set on an item already in the
+product-catalog -> click the category-tile for the product's category -> click
+the product-card -> click add-to-cart-button -> (if a quantity or repeat count
+is mentioned) fill cart-item-quantity -> click checkout-submit-button. The
+catalog shows CATEGORIES first, not individual products -- a product-card is
+not reachable until its category-tile has been clicked, so this step can never
+be skipped, even if the story doesn't mention a category explicitly. Known
+categories today: "Fuel & Consumables", "Generators", "Installation", "Parts &
+Accessories", "Service Plans", "Test Data", "Training & Support". Infer the
+single best-matching category from the product name in the story (e.g. a
+fuel/oil/coolant product -> "Fuel & Consumables") and set it as the "value" on
+the category-tile step. Quantity can only be set on an item already in the
 cart, so add-to-cart-button MUST come before cart-item-quantity, never after.
 Do not drop or silently skip part of the story (e.g. a stated quantity, or the
 checkout step) just because no single element matches that word -- decompose
@@ -77,21 +88,21 @@ Note: even though "search-input" or "search-field" might sound like plausible
 testid names, they do not exist in the app and must never be guessed.
 
 CALIBRATION EXAMPLE 2 (decomposing a compound action into ALL implied real steps, in order):
-User story: "As a buyer, I want to buy Portable5000, 3 times at once."
+User story: "As a buyer, I want to buy Diesel Fuel - 55 Gallon Drum, 3 times at once."
 Correct output:
-{{"scenario_id": "buy_portable5000_x3", "steps": [
+{{"scenario_id": "buy_diesel_fuel_55gal_x3", "steps": [
   {{"action": "navigate", "target": "product-catalog"}},
-  {{"action": "click", "target": "product-card", "value": "Portable5000"}},
-  {{"action": "click", "target": "add-to-cart-button"}},
+  {{"action": "click", "target": "category-tile", "value": "Fuel & Consumables"}},
+  {{"action": "click", "target": "product-card", "value": "Diesel Fuel - 55 Gallon Drum"}},
+  {{"action": "click", "target": "add-to-cart-button", "value": "Diesel Fuel - 55 Gallon Drum"}},
   {{"action": "fill", "target": "cart-item-quantity", "value": "3"}},
   {{"action": "click", "target": "checkout-submit-button"}}
 ]}}
-Note: "buy ... 3 times at once" has no single matching testid, but it is fully
-achievable by chaining real implemented elements, in the correct real-world
-order. Every part of the story (the purchase, AND the quantity of 3, AND
-completing checkout) must show up as a step, and add-to-cart-button must come
-BEFORE cart-item-quantity, never after -- do not stop after the first one or
-two recognizable steps, and do not reorder them.
+Note: the category-tile click is now mandatory before any product-card click,
+since products are not visible until their category is selected. Every part of
+the story (the purchase, the quantity of 3, AND completing checkout) must show
+up as a step, in this exact order -- do not stop after the first one or two
+recognizable steps, and do not reorder or omit the category-tile step.
 - "checkout-confirmation" (shown after a successful order, contains the created Order Id)
 - "checkout-error" (shown if checkout fails)
 - Account-based pricing IS implemented: different accounts (e.g. via testAccountId) see different prices for the same product from the resolved price book.
